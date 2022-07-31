@@ -61,5 +61,17 @@
     "publishConfig": {
         "access": "public"
     },
-    "gitHead": "38f5cb944741b949327551f8443448970e644209"
+    "gitHead": "38f5cb944741b949327551f8443448970e644209",
+    "builderSettings": {
+        "options": {
+            "bundle": true,
+            "entryPoints": ["./src/index.ts"],
+            "format": "cjs",
+            "minify": true,
+            "outdir": "./dist",
+            "platform": "node",
+            "target": ["node16"]
+        }
+        
+    }
 }
