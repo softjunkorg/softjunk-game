@@ -1,0 +1,65 @@
+{
+    "name": "softjunk-game",
+    "version": "0.0.0",
+    "description": "Used on Client and Server development on the Softjunk FiveM Framework!",
+    "keywords": [
+        "typescript",
+        "javascript",
+        "softjunk",
+        "fivem",
+        "framework",
+        "utils",
+        "client",
+        "server",
+        "smp"
+    ],
+    "homepage": "https://github.com/softjunkorg/softjunk-game#readme",
+    "bugs": {
+        "url": "https://github.com/softjunk/packages/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/softjunkorg/softjunk-game.git"
+    },
+    "license": "MIT",
+    "author": "Softjunk Developers <softjunkdevs@gmail.com>",
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/types.d.ts",
+    "directories": {
+        "dist": "dist"
+    },
+    "files": [
+        "/dist"
+    ],
+    "scripts": {
+        "build": "rimraf dist && node .build/builder.js",
+        "clean": "rimraf dist softjunk-game-*.tgz",
+        "lint": "eslint .",
+        "lint-and-fix": "eslint . --fix",
+        "watch": "rimraf dist && node .build/builder.js --watch"
+    },
+    "dependencies": {
+        "@citizenfx/client": "^2.0.5712-1",
+        "@citizenfx/server": "^2.0.5712-1",
+        "fivem-js": "^1.5.2"
+    },
+    "devDependencies": {
+        "@types/node": "^17.0.25",
+        "@typescript-eslint/eslint-plugin": "^5.31.0",
+        "@typescript-eslint/parser": "^5.31.0",
+        "colors": "^1.4.0",
+        "esbuild": "^0.14.49",
+        "esbuild-plugin-d.ts": "^1.0.5",
+        "eslint": "^8.20.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-prettier": "^4.2.1",
+        "prettier": "^2.7.1",
+        "proxy-deep": "^3.1.1",
+        "typescript": "^4.7.4"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "gitHead": "38f5cb944741b949327551f8443448970e644209"
+}

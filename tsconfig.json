@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "esnext",
+        "sourceMap": false,
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "declaration": true,
+        "resolveJsonModule": true,
+        "types": ["@citizenfx/client", "@citizenfx/server", "@types/node"]
+    },
+    "include": ["src/*"]
+}
