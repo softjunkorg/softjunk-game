@@ -25,7 +25,7 @@
     "author": "Softjunk Developers <softjunkdevs@gmail.com>",
     "main": "dist/index.js",
     "module": "dist/index.js",
-    "types": "dist/types.d.ts",
+    "types": "dist/index.d.ts",
     "directories": {
         "dist": "dist"
     },
@@ -65,13 +65,16 @@
     "builderSettings": {
         "options": {
             "bundle": true,
-            "entryPoints": ["./src/index.ts"],
+            "entryPoints": [
+                "./src/index.ts"
+            ],
             "format": "cjs",
             "minify": true,
             "outdir": "./dist",
             "platform": "node",
-            "target": ["node16"]
+            "target": [
+                "node16"
+            ]
         }
-        
     }
 }
