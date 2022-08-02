@@ -41,8 +41,8 @@
         "prepare": "yarn lint && yarn clean && yarn build"
     },
     "dependencies": {
-        "@citizenfx/client": "latest",
-        "@citizenfx/server": "latest"
+        "@citizenfx/client": "^2.0.5777-1",
+        "@citizenfx/server": "^2.0.5777-1"
     },
     "devDependencies": {
         "@types/node": "^17.0.25",
