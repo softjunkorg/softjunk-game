@@ -1,6 +1,6 @@
 import { CreatePromise } from "./lib";
 
-export function LoadModel(model: string): Promise<unknown> {
+export function LoadModel(model: string): Promise<any> {
     return CreatePromise(resolve => {
         const hash = IsModelValid(model) ? parseInt(model) : GetHashKey(model);
 
@@ -15,7 +15,7 @@ export function LoadModel(model: string): Promise<unknown> {
     });
 }
 
-export function LoadStreamedTextureDict(dict: string): Promise<unknown> {
+export function LoadStreamedTextureDict(dict: string): Promise<any> {
     return CreatePromise(resolve => {
         RequestStreamedTextureDict(dict, false);
 
@@ -28,7 +28,7 @@ export function LoadStreamedTextureDict(dict: string): Promise<unknown> {
     });
 }
 
-export function LoadAnimDict(dict: string): Promise<unknown> {
+export function LoadAnimDict(dict: string): Promise<any> {
     return CreatePromise(resolve => {
         RequestAnimDict(dict);
 

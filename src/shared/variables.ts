@@ -1,5 +1,3 @@
-export default {
-    RESOURCE_NAME: GetCurrentResourceName(),
-    IS_RESOURCE_SERVER: IsDuplicityVersion(),
-    IS_RESOURCE_CLIENT: !IsDuplicityVersion(),
-};
+export const RESOURCE_NAME = GetCurrentResourceName();
+export const IS_RESOURCE_SERVER = IsDuplicityVersion();
+export const IS_RESOURCE_CLIENT = !IsDuplicityVersion();

@@ -1,6 +1,6 @@
 import { CreateThread, CreatePromise } from "./lib";
 import DeepProxy from "proxy-deep";
-import Variables from "./variables";
+import * as Variables from "./variables";
 
 export interface Method {
     name: string;
@@ -44,17 +44,18 @@ export function CreateResourceExport(object?: object) {
         if (isObject(object)) {
             mapper(object);
         } else {
-            throw new Error("Not an object");
+            throw new Error("GameAPI: The create argument was not an object!");
         }
 
         return entries;
     }
 
-    const entries = mapObject(object);
-
-    entries.map(e => {
-        methods.push({ name: e, handler: object[e] });
-    });
+    if (object) {
+        const entries = mapObject(object);
+        entries.map(e => {
+            methods.push({ name: e, handler: object[e] });
+        });
+    }
 
     function Add(method: string, handler: (...args: any[]) => void) {
         if (!methods.find(m => m.name === method)) {
@@ -95,29 +96,38 @@ export function CreateResourceExport(object?: object) {
                 if (incomingIsServer) emitNet(`${resource}.received`, name);
             }
 
-            if (method) {
-                const result = await method.handler(...args);
+            async function execute() {
+                if (method) {
+                    const result = await method.handler(...args);
 
-                if (
-                    (isServer && incomingIsServer) ||
-                    (!isServer && incomingIsServer) ||
-                    (!isServer && !incomingIsServer)
-                ) {
-                    emit(`${resource}.response`, name, result);
-                }
+                    if (
+                        (isServer && incomingIsServer) ||
+                        (!isServer && incomingIsServer) ||
+                        (!isServer && !incomingIsServer)
+                    ) {
+                        emit(`${resource}.response`, name, result);
+                    }
 
-                if (isServer) {
-                    if (!incomingIsServer)
-                        emitNet(`${resource}.response`, _source, name, result);
+                    if (isServer) {
+                        if (!incomingIsServer)
+                            emitNet(
+                                `${resource}.response`,
+                                _source,
+                                name,
+                                result,
+                            );
+                    } else {
+                        if (incomingIsServer)
+                            emitNet(`${resource}.response`, name, result);
+                    }
                 } else {
-                    if (incomingIsServer)
-                        emitNet(`${resource}.response`, name, result);
+                    throw new Error(
+                        `GameAPI: The request method ${name} don't exists!`,
+                    );
                 }
-            } else {
-                throw new Error(
-                    `GameAPI: The request method ${name} don't exists!`,
-                );
             }
+
+            CreateThread(execute);
         },
     );
 

@@ -1,4 +1,4 @@
-const { dts } = require("esbuild-plugin-d.ts");
+const { dtsPlugin } = require("esbuild-plugin-d.ts");
 const { build } = require("esbuild");
 const colors = require("colors");
 const config = require("../package.json");
@@ -12,7 +12,7 @@ if (!config.builderSettings) {
 function runBuild(config) {
     build({
         ...config,
-        plugins: [dts()],
+        plugins: [dtsPlugin()],
         watch: isWatch
             ? {
                   onRebuild: function (err, res) {

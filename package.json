@@ -37,12 +37,12 @@
         "clean": "rimraf dist softjunk-game-*.tgz",
         "lint": "eslint .",
         "lint-and-fix": "eslint . --fix",
-        "watch": "rimraf dist && node .build/builder.js --watch"
+        "watch": "rimraf dist && node .build/builder.js --watch",
+        "prepare": "yarn lint && yarn clean && yarn build"
     },
     "dependencies": {
-        "@citizenfx/client": "^2.0.5712-1",
-        "@citizenfx/server": "^2.0.5712-1",
-        "fivem-js": "^1.5.2"
+        "@citizenfx/client": "latest",
+        "@citizenfx/server": "latest"
     },
     "devDependencies": {
         "@types/node": "^17.0.25",
