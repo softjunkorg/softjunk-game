@@ -188,11 +188,11 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
     return resource;
 }
 
-export function GetResourceExport(
+export function GetResourceExport<T = any>(
     local = true,
     resource: string = Variables.RESOURCE_NAME,
-): any {
-    return new DeepProxy(
+): T {
+    return new DeepProxy<any>(
         {},
         {
             get() {
