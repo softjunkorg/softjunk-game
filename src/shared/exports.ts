@@ -1,16 +1,26 @@
-import { CreateThread, CreatePromise } from "./lib";
+import {
+    CreateThread,
+    CreatePromise,
+} from "./lib";
+import { RESOURCE_NAME, IS_RESOURCE_SERVER } from "./variables";
 import DeepProxy from "proxy-deep";
-import * as Variables from "./variables";
+import "@citizenfx/server";
 
 export interface Method {
     name: string;
     handler: (...args: any[]) => void;
 }
 
+export type Promisified<T> = {
+    [K in keyof T]: T[K] extends (...args: any) => infer R
+        ? (...args: Parameters<T[K]>) => Promise<R>
+        : T;
+};
+
 export function CreateResourceExport(object?: object) {
     let methods: Method[] = [];
-    const resource = Variables.RESOURCE_NAME;
-    const isServer = Variables.IS_RESOURCE_SERVER;
+    const resource = RESOURCE_NAME;
+    const isServer = IS_RESOURCE_SERVER;
 
     function mapObject(object) {
         const entries = [];
@@ -28,13 +38,9 @@ export function CreateResourceExport(object?: object) {
                 if (isObject(value)) {
                     mapper(value, `${dkey}${separator}${key}`);
                 } else if (Array.isArray(value)) {
-                    value.map((v, i) => {
-                        if (isObject(v)) {
-                            mapper(v, `${dkey}${separator}${key}[${i}]`);
-                        } else {
-                            entries.push(`${dkey}${separator}${key}[${i}]`);
-                        }
-                    });
+                    throw new Error(
+                        "GameAPI: An array cannot be rendered on the export object!",
+                    );
                 } else {
                     entries.push(`${dkey}${separator}${key}`);
                 }
@@ -50,10 +56,27 @@ export function CreateResourceExport(object?: object) {
         return entries;
     }
 
+    function fetchFromObject(obj, prop) {
+        if (typeof obj === "undefined") {
+            return false;
+        }
+
+        const _index = prop.indexOf(".");
+        if (_index > -1) {
+            return fetchFromObject(
+                obj[prop.substring(0, _index)],
+                prop.substr(_index + 1),
+            );
+        }
+
+        return obj[prop];
+    }
+
     if (object) {
         const entries = mapObject(object);
         entries.map(e => {
-            methods.push({ name: e, handler: object[e] });
+            const handler = fetchFromObject(object, e);
+            methods.push({ name: e, handler: handler });
         });
     }
 
@@ -94,6 +117,7 @@ export function CreateResourceExport(object?: object) {
                     emitNet(`${resource}.received`, _source, name);
             } else {
                 if (incomingIsServer) emitNet(`${resource}.received`, name);
+                else emit(`${resource}.received`, name);
             }
 
             async function execute() {
@@ -119,8 +143,15 @@ export function CreateResourceExport(object?: object) {
                     } else {
                         if (incomingIsServer)
                             emitNet(`${resource}.response`, name, result);
+                        else emit(`${resource}.response`, name, result);
                     }
                 } else {
+                    if (!isServer && incomingIsServer) {
+                        emit(
+                            `${resource}.error`,
+                            `GameAPI: The request method ${name} don't exists!`,
+                        );
+                    }
                     throw new Error(
                         `GameAPI: The request method ${name} don't exists!`,
                     );
@@ -136,9 +167,24 @@ export function CreateResourceExport(object?: object) {
 
 function RequestResolver(target: object, thisArg: any, args: any[]) {
     const resource = this.resource;
-    const local = this.local;
-    const path = this.path.join(".");
-    const isServer = Variables.IS_RESOURCE_SERVER;
+    const sameResourceType = this.sameResourceType;
+    const isServer = IS_RESOURCE_SERVER;
+
+    let path: any = [];
+
+    function isNumeric(value) {
+        return /^-?\d+$/.test(value);
+    }
+
+    this.path.map((p: string) => {
+        if (isNumeric(p)) {
+            path[path.length - 1] += `[${p}]`;
+        } else {
+            path.push(p);
+        }
+    });
+
+    path = path.join(".");
 
     if (path) {
         return CreatePromise(function (resolve) {
@@ -147,15 +193,18 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
                 const nested_args = args.filter((_, i) => i !== 0);
                 const interval = setInterval(function () {
                     if (
-                        (isServer && local) ||
-                        (!isServer && local) ||
-                        (!isServer && !local)
+                        (isServer && sameResourceType) ||
+                        (!isServer && sameResourceType)
                     ) {
                         emit(`${resource}.request`, path, args, isServer);
                     }
 
+                    if (!isServer && !sameResourceType) {
+                        emitNet(`${resource}.request`, path, args, isServer);
+                    }
+
                     if (isServer) {
-                        if (!local)
+                        if (!sameResourceType)
                             emitNet(
                                 `${resource}.request`,
                                 _source,
@@ -164,13 +213,8 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
                                 isServer,
                             );
                     } else {
-                        if (local)
-                            emitNet(
-                                `${resource}.request`,
-                                path,
-                                args,
-                                isServer,
-                            );
+                        if (sameResourceType)
+                            emit(`${resource}.request`, path, args, isServer);
                     }
                 }, 500);
 
@@ -181,6 +225,10 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
                 onNet(`${resource}.received`, (p: string) => {
                     if (path === p) clearInterval(interval);
                 });
+
+                onNet(`${resource}.error`, (error: string) => {
+                    throw new Error(error);
+                });
             });
         });
     }
@@ -189,21 +237,21 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
 }
 
 export function GetResourceExport<T = any>(
-    local = true,
-    resource: string = Variables.RESOURCE_NAME,
-): T {
+    sameResourceType = true,
+    resource: string = RESOURCE_NAME,
+): Promisified<T> {
     return new DeepProxy<any>(
         {},
         {
             get() {
-                return this.nest(function () {});
+                return this.nest(() => {});
             },
             apply: RequestResolver,
         },
         {
             userData: {
                 resource: resource,
-                local: local,
+                sameResourceType: sameResourceType,
             },
         },
     );
