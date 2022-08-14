@@ -1,9 +1,7 @@
-import {
-    CreateThread,
-    CreatePromise,
-} from "./lib";
+import { CreateThread, CreatePromise } from "./lib";
 import { RESOURCE_NAME, IS_RESOURCE_SERVER } from "./variables";
 import DeepProxy from "proxy-deep";
+import "@citizenfx/client";
 import "@citizenfx/server";
 
 export interface Method {
@@ -11,14 +9,14 @@ export interface Method {
     handler: (...args: any[]) => void;
 }
 
-export type Promisified<T> = {
-    [K in keyof T]: T[K] extends (...args: any) => infer R
-        ? (...args: Parameters<T[K]>) => Promise<R>
-        : T;
+type Promisified<T> = {
+    [K in keyof T]: T[K] extends (...args: any[]) => infer U
+        ? (...args: Parameters<T[K]>) => Promise<U>
+        : Promisified<T[K]>;
 };
 
-export function CreateResourceExport(object?: object) {
-    let methods: Method[] = [];
+export function CreateResourceExport<T = any>(object?: T): Promisified<T> {
+    const methods: Method[] = [];
     const resource = RESOURCE_NAME;
     const isServer = IS_RESOURCE_SERVER;
 
@@ -78,24 +76,6 @@ export function CreateResourceExport(object?: object) {
             const handler = fetchFromObject(object, e);
             methods.push({ name: e, handler: handler });
         });
-    }
-
-    function Add(method: string, handler: (...args: any[]) => void) {
-        if (!methods.find(m => m.name === method)) {
-            methods.push({ name: method, handler });
-            return true;
-        } else {
-            throw new Error(`GameAPI: The method ${method} alredy exists!`);
-        }
-    }
-
-    function Rem(method: string) {
-        if (methods.find(m => m.name === method)) {
-            methods = methods.filter(m => m.name !== method);
-            return true;
-        } else {
-            throw new Error(`GameAPI: The method ${method} don't exists!`);
-        }
     }
 
     onNet(
@@ -162,7 +142,7 @@ export function CreateResourceExport(object?: object) {
         },
     );
 
-    return { Add, Rem };
+    return object as unknown as Promisified<T>;
 }
 
 function RequestResolver(target: object, thisArg: any, args: any[]) {

@@ -1,3 +1,4 @@
+export * from "./shared/deferrals";
 export * from "./shared/exports";
 export * from "./shared/lib";
 export * from "./shared/loaders";
