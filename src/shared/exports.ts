@@ -219,7 +219,7 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
 export function GetResourceExport<T = any>(
     sameResourceType = true,
     resource: string = RESOURCE_NAME,
-): Promisified<T> {
+): T {
     return new DeepProxy<any>(
         {},
         {
