@@ -15,7 +15,7 @@ type Promisified<T> = {
         : Promisified<T[K]>;
 };
 
-export function CreateResourceExport<T = any>(object?: T): Promisified<T> {
+export function CreateResourceExport<T>(object?: T): T {
     const methods: Method[] = [];
     const resource = RESOURCE_NAME;
     const isServer = IS_RESOURCE_SERVER;
@@ -142,7 +142,7 @@ export function CreateResourceExport<T = any>(object?: T): Promisified<T> {
         },
     );
 
-    return object as unknown as Promisified<T>;
+    return object;
 }
 
 function RequestResolver(target: object, thisArg: any, args: any[]) {
@@ -219,7 +219,7 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
 export function GetResourceExport<T = any>(
     sameResourceType = true,
     resource: string = RESOURCE_NAME,
-): T {
+): Promisified<T> {
     return new DeepProxy<any>(
         {},
         {
