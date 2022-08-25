@@ -1,5 +1,5 @@
 export function SendNUIData(action: string, data: any): void {
-    return SendNUIMessage(JSON.stringify({ action, data }));
+    return SendNUIMessage({ action, data });
 }
 
 export function RegisterNUICallback(
