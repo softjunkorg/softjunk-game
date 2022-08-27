@@ -33,12 +33,12 @@
         "/dist"
     ],
     "scripts": {
-        "build": "rimraf dist && node .build/builder.js",
+        "build": "rimraf dist && node build.js --mode=production",
         "clean": "rimraf dist softjunk-game-*.tgz",
         "lint": "eslint .",
         "lint-and-fix": "eslint . --fix",
-        "watch": "rimraf dist && node .build/builder.js --watch",
-        "prepare": "yarn lint && yarn clean && yarn build"
+        "prepare": "yarn lint && yarn clean && yarn build",
+        "watch": "rimraf dist && node build.js"
     },
     "dependencies": {
         "@citizenfx/client": "^2.0.5777-1",
@@ -61,20 +61,5 @@
     "publishConfig": {
         "access": "public"
     },
-    "gitHead": "38f5cb944741b949327551f8443448970e644209",
-    "builderSettings": {
-        "options": {
-            "bundle": true,
-            "entryPoints": [
-                "./src/index.ts"
-            ],
-            "format": "cjs",
-            "minify": true,
-            "outdir": "./dist",
-            "platform": "node",
-            "target": [
-                "node16"
-            ]
-        }
-    }
+    "gitHead": "38f5cb944741b949327551f8443448970e644209"
 }
