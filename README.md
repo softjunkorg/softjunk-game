@@ -17,6 +17,7 @@ The documentation is beeing prepared, we are going to provide soon as possible.
 ## 🔨 Authors
 
 -   [@felpsdev](https://www.github.com/felpsdev)
+-   [@peaaky](https://www.github.com/peaaky)
 
 ## 📃 License
 

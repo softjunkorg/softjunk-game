@@ -1,21 +1,29 @@
 import { CreatePromise } from "./lib";
 
-export function LoadModel(model: string): Promise<any> {
+const maxTimeout = 60 * 5;
+
+export function LoadModel(model: string | number): Promise<boolean> {
     return CreatePromise(resolve => {
-        const hash = IsModelValid(model) ? parseInt(model) : GetHashKey(model);
+        if (IsModelValid(model)) {
+            const hash = typeof model === "string" ? GetHashKey(model) : model;
+            RequestModel(hash);
 
-        RequestModel(hash);
+            const tick = setTick(() => {
+                if (HasModelLoaded(hash)) {
+                    clearTick(tick);
+                    resolve(true);
+                }
+            });
 
-        const tick = setTick(() => {
-            if (HasModelLoaded(hash)) {
+            setTimeout(() => {
                 clearTick(tick);
-                resolve(true);
-            }
-        });
+                resolve(false);
+            }, maxTimeout);
+        }
     });
 }
 
-export function LoadStreamedTextureDict(dict: string): Promise<any> {
+export function LoadStreamedTextureDict(dict: string): Promise<boolean> {
     return CreatePromise(resolve => {
         RequestStreamedTextureDict(dict, false);
 
@@ -25,10 +33,15 @@ export function LoadStreamedTextureDict(dict: string): Promise<any> {
                 resolve(true);
             }
         });
+
+        setTimeout(() => {
+            clearTick(tick);
+            resolve(false);
+        }, maxTimeout);
     });
 }
 
-export function LoadAnimDict(dict: string): Promise<any> {
+export function LoadAnimDict(dict: string): Promise<boolean> {
     return CreatePromise(resolve => {
         RequestAnimDict(dict);
 
@@ -38,9 +51,17 @@ export function LoadAnimDict(dict: string): Promise<any> {
                 resolve(true);
             }
         });
+
+        setTimeout(() => {
+            clearTick(tick);
+            resolve(false);
+        }, maxTimeout);
     });
 }
 
-export function LoadResourceJson(resource: string, fileName: string): JSON {
+export function LoadResourceJson<T>(
+    resource: string,
+    fileName: string,
+): T extends null ? JSON : T {
     return JSON.parse(LoadResourceFile(resource, fileName));
 }

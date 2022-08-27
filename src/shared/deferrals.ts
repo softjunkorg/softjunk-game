@@ -1,4 +1,4 @@
-export function FormatCard(card: object, object: object) {
+export function FormatCard(card: object, object: object): string {
     const stringified = JSON.stringify(card);
     const regex = /{{(.*?)}}/g;
     let result: string = stringified;

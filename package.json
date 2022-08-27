@@ -1,6 +1,6 @@
 {
     "name": "softjunk-game",
-    "version": "0.0.5-1",
+    "version": "0.0.5-2",
     "description": "Used on Client and Server development on the Softjunk FiveM Framework!",
     "keywords": [
         "typescript",
