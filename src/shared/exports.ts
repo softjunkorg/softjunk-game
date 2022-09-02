@@ -1,5 +1,6 @@
 import { CreateThread, CreatePromise } from "./lib";
 import { RESOURCE_NAME, IS_RESOURCE_SERVER } from "./variables";
+import { GenRandomInt } from "./numbers";
 import DeepProxy from "proxy-deep";
 import "@citizenfx/client";
 import "@citizenfx/server";
@@ -20,14 +21,14 @@ export function CreateResourceExport<T>(object?: T): T {
     const resource = RESOURCE_NAME;
     const isServer = IS_RESOURCE_SERVER;
 
-    function mapObject(object) {
-        const entries = [];
+    function mapObject(object: any) {
+        const entries: string[] = [];
 
-        function isObject(obj) {
+        function isObject(obj: object) {
             return !!obj && obj.constructor === Object;
         }
 
-        function mapper(obj, dkey = "") {
+        function mapper(obj: object, dkey = "") {
             Object.entries(obj).map(e => {
                 const key = e[0];
                 const value = e[1];
@@ -54,7 +55,7 @@ export function CreateResourceExport<T>(object?: T): T {
         return entries;
     }
 
-    function fetchFromObject(obj, prop) {
+    function fetchFromObject(obj: any, prop: string): any {
         if (typeof obj === "undefined") {
             return false;
         }
@@ -80,7 +81,12 @@ export function CreateResourceExport<T>(object?: T): T {
 
     onNet(
         `${resource}.request`,
-        async (name: string, args: any[], incomingIsServer: boolean) => {
+        async (
+            name: string,
+            args: any[],
+            incomingIsServer: boolean,
+            requestID: string,
+        ) => {
             const method = methods.find(m => m.name === name);
             const _source = (global as any).source;
 
@@ -89,15 +95,16 @@ export function CreateResourceExport<T>(object?: T): T {
                 (!isServer && incomingIsServer) ||
                 (!isServer && !incomingIsServer)
             ) {
-                emit(`${resource}.received`, name);
+                emit(`${resource}:${requestID}.received`, name);
             }
 
             if (isServer) {
                 if (!incomingIsServer)
-                    emitNet(`${resource}.received`, _source, name);
+                    emitNet(`${resource}:${requestID}.received`, _source, name);
             } else {
-                if (incomingIsServer) emitNet(`${resource}.received`, name);
-                else emit(`${resource}.received`, name);
+                if (incomingIsServer)
+                    emitNet(`${resource}:${requestID}.received`, name);
+                else emit(`${resource}:${requestID}.received`, name);
             }
 
             async function execute() {
@@ -109,26 +116,35 @@ export function CreateResourceExport<T>(object?: T): T {
                         (!isServer && incomingIsServer) ||
                         (!isServer && !incomingIsServer)
                     ) {
-                        emit(`${resource}.response`, name, result);
+                        emit(`${resource}:${requestID}.response`, name, result);
                     }
 
                     if (isServer) {
                         if (!incomingIsServer)
                             emitNet(
-                                `${resource}.response`,
+                                `${resource}:${requestID}.response`,
                                 _source,
                                 name,
                                 result,
                             );
                     } else {
                         if (incomingIsServer)
-                            emitNet(`${resource}.response`, name, result);
-                        else emit(`${resource}.response`, name, result);
+                            emitNet(
+                                `${resource}:${requestID}.response`,
+                                name,
+                                result,
+                            );
+                        else
+                            emit(
+                                `${resource}:${requestID}.response`,
+                                name,
+                                result,
+                            );
                     }
                 } else {
                     if (!isServer && incomingIsServer) {
                         emit(
-                            `${resource}.error`,
+                            `${resource}:${requestID}.error`,
                             `GameAPI: The request method ${name} don't exists!`,
                         );
                     }
@@ -142,7 +158,7 @@ export function CreateResourceExport<T>(object?: T): T {
         },
     );
 
-    return object;
+    return object as unknown as T;
 }
 
 function RequestResolver(target: object, thisArg: any, args: any[]) {
@@ -152,7 +168,7 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
 
     let path: any = [];
 
-    function isNumeric(value) {
+    function isNumeric(value: any) {
         return /^-?\d+$/.test(value);
     }
 
@@ -171,16 +187,30 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
             CreateThread(function () {
                 const _source = args[0];
                 const nested_args = args.filter((_, i) => i !== 0);
+                const requestID = GenRandomInt(0, 1000000000);
+
                 const interval = setInterval(function () {
                     if (
                         (isServer && sameResourceType) ||
                         (!isServer && sameResourceType)
                     ) {
-                        emit(`${resource}.request`, path, args, isServer);
+                        emit(
+                            `${resource}.request`,
+                            path,
+                            args,
+                            isServer,
+                            requestID,
+                        );
                     }
 
                     if (!isServer && !sameResourceType) {
-                        emitNet(`${resource}.request`, path, args, isServer);
+                        emitNet(
+                            `${resource}.request`,
+                            path,
+                            args,
+                            isServer,
+                            requestID,
+                        );
                     }
 
                     if (isServer) {
@@ -191,22 +221,32 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
                                 path,
                                 nested_args,
                                 isServer,
+                                requestID,
                             );
                     } else {
                         if (sameResourceType)
-                            emit(`${resource}.request`, path, args, isServer);
+                            emit(
+                                `${resource}.request`,
+                                path,
+                                args,
+                                isServer,
+                                requestID,
+                            );
                     }
                 }, 500);
 
-                onNet(`${resource}.response`, (p: string, result: any) => {
-                    if (path === p) resolve(result);
-                });
+                onNet(
+                    `${resource}:${requestID}.response`,
+                    (p: string, result: any) => {
+                        if (path === p) resolve(result);
+                    },
+                );
 
-                onNet(`${resource}.received`, (p: string) => {
+                onNet(`${resource}:${requestID}.received`, (p: string) => {
                     if (path === p) clearInterval(interval);
                 });
 
-                onNet(`${resource}.error`, (error: string) => {
+                onNet(`${resource}:${requestID}.error`, (error: string) => {
                     throw new Error(error);
                 });
             });
