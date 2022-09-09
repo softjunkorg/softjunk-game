@@ -5,15 +5,19 @@ import DeepProxy from "proxy-deep";
 import "@citizenfx/client";
 import "@citizenfx/server";
 
+type CheckPromise<U> = U extends Promise<any> ? U : Promise<U>;
+
 export interface Method {
     name: string;
     handler: (...args: any[]) => void;
 }
 
-type Promisified<T> = {
-    [K in keyof T]: T[K] extends (...args: any[]) => infer U
-        ? (...args: Parameters<T[K]>) => Promise<U>
-        : Promisified<T[K]>;
+type Transformer<T, F> = {
+    [K in keyof T]: T[K] extends (...args: infer A) => infer U
+        ? F extends true
+            ? (clientTarget: number, ...args: A) => CheckPromise<U>
+            : (...args: A) => Promise<U>
+        : Transformer<T[K], F>;
 };
 
 export function CreateResourceExport<T>(object?: T): T {
@@ -256,10 +260,10 @@ function RequestResolver(target: object, thisArg: any, args: any[]) {
     return resource;
 }
 
-export function GetResourceExport<T = any>(
+export function GetResourceExport<T = any, F extends boolean = false>(
     sameResourceType = true,
     resource: string = RESOURCE_NAME,
-): Promisified<T> {
+): Transformer<T, F> {
     return new DeepProxy<any>(
         {},
         {
