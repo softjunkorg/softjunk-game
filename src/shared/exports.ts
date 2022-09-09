@@ -15,7 +15,7 @@ export interface Method {
 type Transformer<T, F> = {
     [K in keyof T]: T[K] extends (...args: infer A) => infer U
         ? F extends true
-            ? (clientTarget: number, ...args: A) => CheckPromise<U>
+            ? (clientTarget: string | number, ...args: A) => CheckPromise<U>
             : (...args: A) => Promise<U>
         : Transformer<T[K], F>;
 };
